@@ -11,11 +11,11 @@
 
 | Phase | 내용                                         | 저장소   | 상태 |
 | ----- | -------------------------------------------- | -------- | ---- |
-| 1     | 저장소 초기화 + 백엔드 스캐폴딩              | 전체     | ⬜   |
-| 2     | 도메인 & DB                                  | backend  | ⬜   |
-| 3     | 인증 + 기본 카테고리 + 인증 테스트           | backend  | ⬜   |
-| 4     | 카테고리 · 거래 API + 시드 + 테스트          | backend  | ⬜   |
-| 5     | 집계 · 예측 API + 테스트                     | backend  | ⬜   |
+| 1     | 저장소 초기화 + 백엔드 스캐폴딩              | 전체     | ✅   |
+| 2     | 도메인 & DB                                  | backend  | ✅   |
+| 3     | 인증 + 기본 카테고리 + 인증 테스트           | backend  | ✅   |
+| 4     | 카테고리 · 거래 API + 시드 + 테스트          | backend  | ✅   |
+| 5     | 집계 · 예측 API + 테스트                     | backend  | ✅   |
 | 6     | 예산 · CSV API + 테스트                      | backend  | ⬜   |
 | 7     | 프론트 스캐폴딩                              | frontend | ⬜   |
 | 8     | 인증 화면                                    | frontend | ⬜   |
@@ -137,15 +137,15 @@ _백엔드 스캐폴딩_
 
 **DoD**
 
-- [ ] `./mvnw spring-boot:run`이 프로파일 지정 없이 기동됨
-- [ ] `http://localhost:8080/swagger-ui/index.html` 접속 가능
-- [ ] `pom.xml`의 SpringDoc 버전이 **정확한 값으로 핀**되어 있고 Boot 마이너와 대응함
-- [ ] `pom.xml`에 jjwt 3종이 있고 `jjwt-impl`·`jjwt-jackson`이 `runtime` scope
-- [ ] `application.properties`가 존재하지 않음
-- [ ] 세 저장소 모두 브랜치가 `main`·`develop`이고 `master`가 없음
-- [ ] 루트 저장소 첫 커밋 대상 파일이 **문서 3~4개 수준**임 (`git status` 확인)
-- [ ] `.env`를 실제로 만들어 `git status`에 나타나지 않고, `.env.example`은 나타남을 확인
-- [ ] `psql`로 `moneylog_db`, `moneylog_test` 접속 확인
+- [x] `./mvnw spring-boot:run`이 프로파일 지정 없이 기동됨
+- [x] `http://localhost:8080/swagger-ui/index.html` 접속 가능
+- [x] `pom.xml`의 SpringDoc 버전이 **정확한 값으로 핀**되어 있고 Boot 마이너와 대응함
+- [x] `pom.xml`에 jjwt 3종이 있고 `jjwt-impl`·`jjwt-jackson`이 `runtime` scope
+- [x] `application.properties`가 존재하지 않음
+- [x] 세 저장소 모두 브랜치가 `main`·`develop`이고 `master`가 없음
+- [x] 루트 저장소 첫 커밋 대상 파일이 **문서 3~4개 수준**임 (`git status` 확인)
+- [x] `.env`를 실제로 만들어 `git status`에 나타나지 않고, `.env.example`은 나타남을 확인
+- [x] `psql`로 `moneylog_db`, `moneylog_test` 접속 확인
 
 ---
 
@@ -170,14 +170,14 @@ _백엔드 스캐폴딩_
 
 **DoD**
 
-- [ ] `ddl-auto: update`로 기동 시 4개 테이블과 인덱스가 생성됨
-- [ ] `schema-extra.sql` 적용 후, 같은 이름의 카테고리를 **삭제 → 재생성**할 수 있음
-- [ ] 같은 이름의 카테고리를 **삭제하지 않고 중복 생성**하면 DB 제약에 걸림
-- [ ] `amount = 0` 또는 음수 INSERT가 DB에서 거부됨
-- [ ] `created_at`이 테스트에서 null이 아님 (Auditing 동작 확인)
-- [ ] `psql`에서 `SHOW timezone` 및 저장된 `created_at`이 UTC 기준임을 확인
-- [ ] `BigDecimal` 왕복 테스트: `12500` 저장 → 조회 시 `compareTo == 0` (⚠️ `equals`로 비교하면 실패한다)
-- [ ] Repository 테스트 전체 통과
+- [x] `ddl-auto: update`로 기동 시 4개 테이블과 인덱스가 생성됨
+- [x] `schema-extra.sql` 적용 후, 같은 이름의 카테고리를 **삭제 → 재생성**할 수 있음
+- [x] 같은 이름의 카테고리를 **삭제하지 않고 중복 생성**하면 DB 제약에 걸림
+- [x] `amount = 0` 또는 음수 INSERT가 DB에서 거부됨
+- [x] `created_at`이 테스트에서 null이 아님 (Auditing 동작 확인)
+- [x] `psql`에서 `SHOW timezone` 및 저장된 `created_at`이 UTC 기준임을 확인
+- [x] `BigDecimal` 왕복 테스트: `12500` 저장 → 조회 시 `compareTo == 0` (⚠️ `equals`로 비교하면 실패한다)
+- [x] Repository 테스트 전체 통과
 
 ---
 
@@ -199,17 +199,17 @@ _백엔드 스캐폴딩_
 
 **DoD**
 
-- [ ] `POST /api/v1/auth/signup`이 **403이 아니라 정상 응답** (CSRF 비활성화 확인)
-- [ ] 가입 직후 `GET /api/v1/categories`가 **9개를 반환** (EXPENSE 7 + INCOME 2)
-- [ ] 중복 이메일 가입 시 409 `EMAIL_DUPLICATED`
-- [ ] **한글 25자(75바이트) 비밀번호 가입 시 500이 아니라 400 `INVALID_INPUT`** + 필드 메시지
-- [ ] 로그인 성공 시 JWT 반환. **jwt.io 등으로 디코드해 `alg`가 `HS256`인지 확인** (⚠️ 시크릿 길이로 HS384가 되는 사고 방지)
-- [ ] 같은 토큰의 `exp - iat`가 **86400초(24시간)** 임 (`AUTH-04`. ⚠️ `JWT_EXPIRATION`은 밀리초 단위라 1000배 어긋나도 토큰은 정상 발급된다. Phase 8의 `exp` 기반 라우트 보호가 이 값을 그대로 신뢰한다)
-- [ ] 비밀번호 오류 시 401이며, **미가입 이메일과 응답 메시지가 동일**
-- [ ] 토큰 없이 `/api/v1/auth/me` 호출 시 401이며 **응답이 `ApiResponse` 포맷**
-- [ ] `/auth/me` 응답에 `email`·`nickname` 포함
-- [ ] Swagger UI 접속 가능하고 **Authorize 버튼이 보임** (Phase 1 DoD 회귀 확인)
-- [ ] 인증 통합 테스트 5건 통과
+- [x] `POST /api/v1/auth/signup`이 **403이 아니라 정상 응답** (CSRF 비활성화 확인)
+- [x] 가입 직후 `GET /api/v1/categories`가 **9개를 반환** (EXPENSE 7 + INCOME 2)
+- [x] 중복 이메일 가입 시 409 `EMAIL_DUPLICATED`
+- [x] **한글 25자(75바이트) 비밀번호 가입 시 500이 아니라 400 `INVALID_INPUT`** + 필드 메시지
+- [x] 로그인 성공 시 JWT 반환. **jwt.io 등으로 디코드해 `alg`가 `HS256`인지 확인** (⚠️ 시크릿 길이로 HS384가 되는 사고 방지)
+- [x] 같은 토큰의 `exp - iat`가 **86400초(24시간)** 임 (`AUTH-04`. ⚠️ `JWT_EXPIRATION`은 밀리초 단위라 1000배 어긋나도 토큰은 정상 발급된다. Phase 8의 `exp` 기반 라우트 보호가 이 값을 그대로 신뢰한다)
+- [x] 비밀번호 오류 시 401이며, **미가입 이메일과 응답 메시지가 동일**
+- [x] 토큰 없이 `/api/v1/auth/me` 호출 시 401이며 **응답이 `ApiResponse` 포맷**
+- [x] `/auth/me` 응답에 `email`·`nickname` 포함
+- [x] Swagger UI 접속 가능하고 **Authorize 버튼이 보임** (Phase 1 DoD 회귀 확인)
+- [x] 인증 통합 테스트 5건 통과
 
 ---
 
@@ -252,27 +252,27 @@ _테스트_
 
 **DoD**
 
-- [ ] 목록 API가 `{success, data:{content, page, ...}, error}` 형태로 응답
-- [ ] 목록 응답에 **카테고리 이름·색이 함께 내려옴**
-- [ ] 지출 카테고리에 수입 거래 생성 시 400 `CATEGORY_TYPE_MISMATCH`
-- [ ] `amount = 0` / 음수 / **`CLAUDE.md` 4장 제약 표의 상한 초과** 시 400
+- [x] 목록 API가 `{success, data:{content, page, ...}, error}` 형태로 응답
+- [x] 목록 응답에 **카테고리 이름·색이 함께 내려옴**
+- [x] 지출 카테고리에 수입 거래 생성 시 400 `CATEGORY_TYPE_MISMATCH`
+- [x] `amount = 0` / 음수 / **`CLAUDE.md` 4장 제약 표의 상한 초과** 시 400
   > ⚠️ 상한값을 여기 옮겨 적지 않는다. `NUMERIC(15,2)` 범위이며 정본은 `CLAUDE.md` 4장 입력값 제약 표다
-- [ ] 카테고리 `type` 변경 시도가 **API 스펙상 불가능** (요청 DTO에 필드 없음)
-- [ ] 같은 이름 카테고리 중복 생성 시 409, **삭제 후 같은 이름 재생성은 성공**
-- [ ] **카테고리 삭제 후**: 카테고리 목록에서는 빠지고, 과거 거래 목록에는 `deleted: true`로 남아 있음
-- [ ] 삭제 시 `deleted_at` 기록, 목록에서 제외 (물리 행은 `psql`로 잔존 확인)
-- [ ] 타 사용자 거래·카테고리 접근 시 404 (GET·PUT·DELETE 전부)
-- [ ] **같은 날짜 거래 30건을 만들고 page 0·1을 조회해 id가 중복·누락되지 않음** (2차 정렬 키)
-- [ ] 영문 대소문자를 섞어 검색해도 결과가 나오고, **메모에만 있는 키워드도 검색됨**
-- [ ] `from`/`to`(한쪽만 준 경우 포함) · `type` · `categoryId` 필터가 각각 건수를 줄이고, **함께 걸면 교집합이 나옴** (`TXN-07`)
-- [ ] `?sort=foo,desc` 같은 잘못된 정렬 값에도 500이 나지 않음
-- [ ] 목록 조회 시 **카테고리 조회 쿼리가 건수에 비례해 늘지 않음** (Hibernate Statistics로 항목 3→6개 시 쿼리 수 불변 확인)
-- [ ] 날짜가 배열이 아닌 문자열로 직렬화됨 (`txnDate: "2026-09-14"`, `createdAt: "...Z"`)
-- [ ] 금액이 JSON **숫자**로 직렬화됨 (`12500.00`, 문자열 아님)
-- [ ] **키워드 검색 포함** 목록 조회가 **워밍업 후 3회 측정 중앙값 500ms 이내** (시드 **20,000건** 기준)
+- [x] 카테고리 `type` 변경 시도가 **API 스펙상 불가능** (요청 DTO에 필드 없음)
+- [x] 같은 이름 카테고리 중복 생성 시 409, **삭제 후 같은 이름 재생성은 성공**
+- [x] **카테고리 삭제 후**: 카테고리 목록에서는 빠지고, 과거 거래 목록에는 `deleted: true`로 남아 있음
+- [x] 삭제 시 `deleted_at` 기록, 목록에서 제외 (물리 행은 `psql`로 잔존 확인)
+- [x] 타 사용자 거래·카테고리 접근 시 404 (GET·PUT·DELETE 전부)
+- [x] **같은 날짜 거래 30건을 만들고 page 0·1을 조회해 id가 중복·누락되지 않음** (2차 정렬 키)
+- [x] 영문 대소문자를 섞어 검색해도 결과가 나오고, **메모에만 있는 키워드도 검색됨**
+- [x] `from`/`to`(한쪽만 준 경우 포함) · `type` · `categoryId` 필터가 각각 건수를 줄이고, **함께 걸면 교집합이 나옴** (`TXN-07`)
+- [x] `?sort=foo,desc` 같은 잘못된 정렬 값에도 500이 나지 않음
+- [x] 목록 조회 시 **카테고리 조회 쿼리가 건수에 비례해 늘지 않음** (Hibernate Statistics로 항목 3→6개 시 쿼리 수 불변 확인)
+- [x] 날짜가 배열이 아닌 문자열로 직렬화됨 (`txnDate: "2026-09-14"`, `createdAt: "...Z"`)
+- [x] 금액이 JSON **숫자**로 직렬화됨 (`12500.00`, 문자열 아님)
+- [x] **키워드 검색 포함** 목록 조회가 **워밍업 후 3회 측정 중앙값 500ms 이내** (시드 **20,000건** 기준)
   > ⚠️ 시드 400건으로는 이 지표가 의미가 없다. 인덱스가 없어도 400행은 1ms 미만이라 항상 통과한다. 첫 요청은 JVM 콜드 스타트이므로 워밍업 후 측정한다
-- [ ] Swagger에서 카테고리·거래 API 전체 확인 가능
-- [ ] 통합 테스트 8건(6~13번) 통과
+- [x] Swagger에서 카테고리·거래 API 전체 확인 가능
+- [x] 통합 테스트 8건(6~13번) 통과
 
 ---
 
@@ -301,28 +301,28 @@ _테스트_
 
 **DoD**
 
-- [ ] **거래가 없는 달 조회 시 500이 아니라 모두 0** (`COALESCE` 검증)
-- [ ] `summary.income - summary.expense == summary.net`이고, 세 값이 **해당 월 거래를 직접 SQL로 합산한 값과 `compareTo == 0`** (`STAT-01`)
-- [ ] `daily` 배열의 `expense`·`income` 총합이 `summary`와 일치하고, **날짜가 대상 월 밖으로 새지 않음** (`STAT-03`)
-- [ ] **`daily`의 길이가 그 달의 일수와 같고**(2월 28/29 · 4월 30 · 1월 31), 거래가 없는 날도 `expense: 0.00`·`income: 0.00`으로 들어 있음 (`CLAUDE.md` 5장)
+- [x] **거래가 없는 달 조회 시 500이 아니라 모두 0** (`COALESCE` 검증)
+- [x] `summary.income - summary.expense == summary.net`이고, 세 값이 **해당 월 거래를 직접 SQL로 합산한 값과 `compareTo == 0`** (`STAT-01`)
+- [x] `daily` 배열의 `expense`·`income` 총합이 `summary`와 일치하고, **날짜가 대상 월 밖으로 새지 않음** (`STAT-03`)
+- [x] **`daily`의 길이가 그 달의 일수와 같고**(2월 28/29 · 4월 30 · 1월 31), 거래가 없는 날도 `expense: 0.00`·`income: 0.00`으로 들어 있음 (`CLAUDE.md` 5장)
   > ⚠️ **`COALESCE`로는 해결되지 않는다.** `GROUP BY txn_date`는 거래가 있는 날만 반환하므로, 빈 날은 `SUM`이 `NULL`인 게 아니라 **그룹 자체가 없다.** 서비스에서 1일~말일을 순회해 채우거나 `generate_series` LEFT JOIN을 쓴다
-- [ ] `yearMonth` 경계 검증: 대상 월의 **1일과 말일 거래가 포함**되고 **직전·다음 달 1일 거래는 제외**됨
-- [ ] 직전 3개월에 거래가 없으면 `forecast`가 `null`, 1~2개월치만 있으면 `basisMonths`에 실제 개월 수
-- [ ] 런레이트가 `확정 + 일평균 × 남은일수`와 **소수 둘째 자리까지 일치**
-- [ ] `daysElapsed < 7`이면 `anomalies`가 빈 배열
-- [ ] `asOf`가 대상 월 이후면 `projectedExpense == confirmedExpense` (과거 달은 예측하지 않음)
-- [ ] 이상치가 30% 임계값을 정확히 적용 (29% 미포함, 31% 포함)
-- [ ] 고정지출 감지가 **3개월 연속 동일 상호를 찾아내고, 2개월만 있는 상호는 제외**
-- [ ] 금액이 ±10%를 벗어나는 달이 섞이면 고정지출로 감지되지 않음
-- [ ] `merchant`가 비어 있는 거래가 고정지출 후보에 들어가지 않음
-- [ ] **`asOf`를 바꾸면 결과가 바뀌고, 서버 시각을 바꿔도 결과가 변하지 않음**
+- [x] `yearMonth` 경계 검증: 대상 월의 **1일과 말일 거래가 포함**되고 **직전·다음 달 1일 거래는 제외**됨
+- [x] 직전 3개월에 거래가 없으면 `forecast`가 `null`, 1~2개월치만 있으면 `basisMonths`에 실제 개월 수
+- [x] 런레이트가 `확정 + 일평균 × 남은일수`와 **소수 둘째 자리까지 일치**
+- [x] `daysElapsed < 7`이면 `anomalies`가 빈 배열
+- [x] `asOf`가 대상 월 이후면 `projectedExpense == confirmedExpense` (과거 달은 예측하지 않음)
+- [x] 이상치가 30% 임계값을 정확히 적용 (29% 미포함, 31% 포함)
+- [x] 고정지출 감지가 **3개월 연속 동일 상호를 찾아내고, 2개월만 있는 상호는 제외**
+- [x] 금액이 ±10%를 벗어나는 달이 섞이면 고정지출로 감지되지 않음
+- [x] `merchant`가 비어 있는 거래가 고정지출 후보에 들어가지 않음
+- [x] **`asOf`를 바꾸면 결과가 바뀌고, 서버 시각을 바꿔도 결과가 변하지 않음**
   > ⚠️ 이 항목이 `CLAUDE.md` 4장의 "서버가 이번 달을 판정하지 않는다"를 실제로 검증하는 유일한 지점이다. `grep -r "now()" src/main/java/com/example/service/StatsService.java`가 비어 있음도 함께 확인한다
-- [ ] 카테고리 비율(`ratio`) 합이 1.0 ± 0.01 (반올림 오차 범위)
-- [ ] **삭제된 카테고리의 과거 지출이 집계에서 빠지지 않음**
-- [ ] 예산 0인 카테고리의 `usageRatio`가 `Infinity`/`NaN`이 아님
-- [ ] 월 대시보드 집계가 **워밍업 후 3회 측정 중앙값 1초 이내** (시드 20,000건)
-- [ ] Swagger에서 집계 API 확인 가능
-- [ ] 단위 테스트 + 통합 테스트 6건(14~19번) 통과
+- [x] 카테고리 비율(`ratio`) 합이 1.0 ± 0.01 (반올림 오차 범위)
+- [x] **삭제된 카테고리의 과거 지출이 집계에서 빠지지 않음**
+- [x] 예산 0인 카테고리의 `usageRatio`가 `Infinity`/`NaN`이 아님
+- [x] 월 대시보드 집계가 **워밍업 후 3회 측정 중앙값 1초 이내** (시드 20,000건)
+- [x] Swagger에서 집계 API 확인 가능
+- [x] 단위 테스트 + 통합 테스트 6건(14~19번) 통과
 
 ---
 

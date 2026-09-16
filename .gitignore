@@ -10,3 +10,13 @@ node_modules/
 # .env*만 쓰면 .env.example까지 무시되므로 예외 줄이 반드시 필요하다
 .env*
 !.env.example
+
+# 로컬 개발 도구 설정 — 이 저장소는 문서만 담는다
+.claude/
+.mcp.json
+.metadata/
+
+# 루트에 설치된 MCP 서버와 그 부산물. 문서 저장소의 내용물이 아니다
+mcp-shrimp-task-manager/
+package.json
+package-lock.json
