@@ -1,0 +1,12 @@
+# 폴리레포: 하위 저장소를 부모가 추적하지 않는다
+# 빠뜨리면 Git이 gitlink로 커밋해 클론 시 빈 폴더만 남는다
+moneylog-backend/
+moneylog-frontend/
+
+node_modules/
+.DS_Store
+*.log
+
+# .env*만 쓰면 .env.example까지 무시되므로 예외 줄이 반드시 필요하다
+.env*
+!.env.example
