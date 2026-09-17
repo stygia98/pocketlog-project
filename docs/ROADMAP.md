@@ -23,6 +23,7 @@
 | 10    | 대시보드 화면 (차트 · 예측 · 예산)           | frontend | ⬜   |
 | 11    | 예산 · 카테고리 · CSV 화면 + 인터랙션 다듬기 | frontend | ⬜   |
 | 12    | 전체 검증                                    | 전체     | ⬜   |
+| 13    | 챗봇 조회 위젯 (규칙 기반)                   | frontend | ⬜   |
 
 ⬜ 대기 · 🟡 진행중 · ✅ 완료
 
@@ -99,6 +100,11 @@
 | UX-06 label · 키보드 완주                | 8 · 9                                                     | 9 · 12                                    |
 | UX-07 다크 토큰 (`prefers-color-scheme`) | 7                                                         | 7 · 12                                    |
 | UX-08 금액 `tabular-nums`                | 7(토큰) · 9                                               | 9 · 12                                    |
+| CHAT-01 플로팅 버튼 열기/닫기            | 13                                                        | 13                                        |
+| CHAT-02 이번 달 요약 조회                | 13(`useMonthlyStatsQuery` 재사용)                         | 13                                        |
+| CHAT-03 카테고리별 지출 조회             | 13(`useCategoriesQuery` + `byCategory` 매칭)              | 13                                        |
+| CHAT-04 최근 내역 조회                   | 13(`useTransactionListQuery` 재사용)                      | 13                                        |
+| CHAT-05 예산·고정지출 조회 + 실패 안내   | 13(`useRecurringQuery` 재사용)                            | 13                                        |
 
 > `PRD.md` 5.1의 **에러 문구 매핑 표**는 Phase 7에서 `lib/errorMessages.ts`로 단일화하고, Phase 8~11에서 화면별로 적용, Phase 12에서 전부 대조한다.
 > `PRD.md` 7장 비기능 요구사항의 검증 위치는 위 표 및 각 Phase DoD와 일치한다.
@@ -727,6 +733,36 @@ _인터랙션_
 
 - [x] 목록 검색 500ms 이내 (시드 20,000건, 워밍업 후 중앙값) — `seed-perf.sql` 적용 후 측정, 중앙값 75ms. 측정 후 20,000건 정리 완료
 - [x] 대시보드 집계 1초 이내 (동일 조건) — 중앙값 103ms
+
+---
+
+## Phase 13 — 챗봇 조회 위젯 (규칙 기반)
+
+**저장소**: `moneylog-frontend` · **관련 요구사항**: CHAT-01~05
+
+새 백엔드 API를 만들지 않는다. 이미 있는 `useMonthlyStatsQuery`·`useRecurringQuery`·`useCategoriesQuery`·`useTransactionListQuery`를 그대로 호출해 답을 만드는 프론트 전용 기능이다. `PRD.md` 3.8·5.1 참조.
+
+**작업**
+
+- `types/chat.ts` — `ChatIntent`(discriminated union), `ChatMessage` 타입
+- `lib/chat/intents.ts` — `parseIntent(text, categories)`: 순수 함수, 키워드 우선순위 매칭(도움말 → 고정지출 → 예산 → 최근 내역 → 카테고리별 지출 → 이번 달 요약 → 실패)
+- `lib/chat/answers.ts` — `buildAnswer(intent, data)`: `lib/money.ts`·`lib/date.ts` 포맷 함수만 사용, 새 포맷 함수를 추가하지 않는다
+- `components/chat/ChatWidget.tsx` — 항상 마운트되는 플로팅 버튼. 열림 상태만 관리
+- `components/chat/ChatPanel.tsx` — 열렸을 때만 마운트. 4개 훅 호출 + 메시지 목록(`useState`) + 입력창. 패널이 닫히면 언마운트되어 쿼리도 함께 멈춘다(기존 훅에 `enabled` 옵션을 추가하지 않는다)
+- `(main)/layout.tsx`에 `<ChatWidget />` 연결
+- 모션은 `TransactionList.tsx`의 기존 `motion/react` + `useReducedMotion` + `AnimatePresence` 패턴을 그대로 따른다
+
+**DoD**
+
+- [ ] 모든 보호된 화면 우하단에 챗봇 버튼이 뜨고 클릭으로 열고 닫힘 — `CHAT-01`
+- [ ] "이번달 지출 얼마야" → 대시보드 총지출과 동일한 금액 응답 — `CHAT-02`
+- [ ] "식비 얼마 썼어" → 대시보드 카테고리별 지출의 식비 금액과 동일 — `CHAT-03`
+- [ ] "최근 내역 보여줘" → 거래 목록 최상단 5건과 동일한 순서·금액 — `CHAT-04`
+- [ ] "예산 얼마 남았어" / "고정지출 뭐있어" → 각각 예산 소진율·고정지출 카드와 동일한 값 — `CHAT-05`
+- [ ] 매칭되지 않는 문장("안녕") → 지원 명령 안내 문구 (빈 응답이나 에러 아님) — `CHAT-05`
+- [ ] 패널을 닫았다 다시 열어도 정상 동작 (언마운트/리마운트 경계에서 에러 없음)
+- [ ] `npx tsc --noEmit`, `npm run lint` 통과
+- [ ] `package.json`에 새 의존성 추가 없음(`git diff package.json`으로 확인)
 
 ---
 
