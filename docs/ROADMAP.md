@@ -17,7 +17,7 @@
 | 4     | 카테고리 · 거래 API + 시드 + 테스트          | backend  | ✅   |
 | 5     | 집계 · 예측 API + 테스트                     | backend  | ✅   |
 | 6     | 예산 · CSV API + 테스트                      | backend  | ✅   |
-| 7     | 프론트 스캐폴딩                              | frontend | ⬜   |
+| 7     | 프론트 스캐폴딩                              | frontend | ✅   |
 | 8     | 인증 화면                                    | frontend | ⬜   |
 | 9     | 거래 화면 (퀵 입력 · 목록 · 상세)            | frontend | ⬜   |
 | 10    | 대시보드 화면 (차트 · 예측 · 예산)           | frontend | ⬜   |
@@ -412,19 +412,19 @@ _CSV_
 
 **DoD**
 
-- [ ] `npm run dev`·`npm run build`·`npm run lint` 전부 통과
-- [ ] `package.json`에 **`recharts`·`react-hook-form`·`zod`·`framer-motion`이 없음**
-- [ ] `next --version`이 15.x
-- [ ] `globals.css`에 **`.dark` 셀렉터·`@custom-variant`가 없음**
-- [ ] OS 다크 모드를 켜면 배경·텍스트가 바뀜 (`prefers-color-scheme` 동작)
-- [ ] `public/static` 디렉토리가 없음
-- [ ] `next.config.ts`에 `distDir`이 없음
-- [ ] Pretendard가 적용됨 (`next/font/local`, Google Fonts 요청 없음)
-- [ ] `formatAmount(1250000)` → `"1,250,000"`, `parseAmount("1,250,000")` → `"1250000"` 왕복 확인
-- [ ] `ErrorState`를 `onRetry` 없이 쓰면 **타입 에러**가 남
-- [ ] `components/chart/` **3개**가 하드코딩 데이터로 렌더됨 (라이트·다크 양쪽)
-- [ ] 차트 SVG가 `components/chart/` 밖에 존재하지 않음
-- [ ] `lib/errorMessages.ts`가 `PRD.md` 5.1 표의 **모든 `error.code`에 대해 문구를 반환**하고, 표에 없는 코드에는 `INTERNAL_ERROR` 문구로 폴백함
+- [x] `npm run dev`·`npm run build`·`npm run lint` 전부 통과
+- [x] `package.json`에 **`recharts`·`react-hook-form`·`zod`·`framer-motion`이 없음**
+- [x] `next --version`이 15.x
+- [x] `globals.css`에 **`.dark` 셀렉터·`@custom-variant`가 없음**
+- [x] OS 다크 모드를 켜면 배경·텍스트가 바뀜 (`prefers-color-scheme` 동작)
+- [x] `public/static` 디렉토리가 없음
+- [x] `next.config.ts`에 `distDir`이 없음
+- [x] Pretendard가 적용됨 (`next/font/local`, Google Fonts 요청 없음)
+- [x] `formatAmount(1250000)` → `"1,250,000"`, `parseAmount("1,250,000")` → `"1250000"` 왕복 확인
+- [x] `ErrorState`를 `onRetry` 없이 쓰면 **타입 에러**가 남
+- [x] `components/chart/` **3개**가 하드코딩 데이터로 렌더됨 (라이트·다크 양쪽)
+- [x] 차트 SVG가 `components/chart/` 밖에 존재하지 않음
+- [x] `lib/errorMessages.ts`가 `PRD.md` 5.1 표의 **모든 `error.code`에 대해 문구를 반환**하고, 표에 없는 코드에는 `INTERNAL_ERROR` 문구로 폴백함
 
 ---
 
