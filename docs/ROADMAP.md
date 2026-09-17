@@ -1,6 +1,6 @@
 # ROADMAP — 포켓로그(PocketLog)
 
-> **버전** 1.3 · **최종 수정** 2026-09-17
+> **버전** 1.4 · **최종 수정** 2026-09-17
 > 이 문서는 "어떤 순서로 만드는가"를 정의하며, **완료 판정의 정본**이다.
 > **한 번에 전체를 생성하지 않는다.** Phase 단위로 진행하고, 각 Phase의 DoD를 모두 만족한 뒤 다음으로 넘어간다.
 > 기술 규칙은 `CLAUDE.md`, 기능 정의는 `PRD.md` 참조.
@@ -24,10 +24,12 @@
 | 11    | 예산 · 카테고리 · CSV 화면 + 인터랙션 다듬기 | frontend | ⬜   |
 | 12    | 전체 검증                                    | 전체     | ⬜   |
 | 13    | 챗봇 조회 위젯 (규칙 기반)                   | frontend | ✅   |
+| 14    | 영수증 인식 API                              | backend  | ⬜   |
+| 15    | 영수증 첨부 등록 화면                        | frontend | ⬜   |
 
 ⬜ 대기 · 🟡 진행중 · ✅ 완료
 
-> **배포는 이번 범위에 없다.** 진행 여부가 결정되면 Phase 13으로 추가한다. `CLAUDE.md` 3장 「배포 여지」의 네 항목은 비용이 0이므로 지금부터 지켜둔다.
+> **배포는 이번 범위에 없다.** 진행 여부가 결정되면 새 Phase로 추가한다. `CLAUDE.md` 3장 「배포 여지」의 네 항목은 비용이 0이므로 지금부터 지켜둔다.
 
 > **테스트는 마지막에 몰아 쓰지 않는다.** 기능을 만든 Phase에서 함께 작성해 그 Phase의 DoD로 삼는다. Phase 12는 새 테스트를 쓰는 단계가 아니라 전체를 확인하는 단계다.
 
@@ -73,6 +75,7 @@
 | TXN-10 삭제 즉시 반영 / Soft Delete      | 4 · 9(상세→목록) · 11(낙관적 제거)                        | 4 · 9 · 11 · 12                           |
 | TXN-11 실패 시 롤백·알림                 | **9(저장 실패: 폼 유지 + 에러)** · 11(삭제 롤백 + 토스트) | 9 · 11 · 12                               |
 | TXN-12 타인 거래 차단                    | 4(404) · 9(전용 화면)                                     | 4 · 9 · 12                                |
+| TXN-13 영수증 첨부 인식                  | 14(`/receipts/parse`) · 15(첨부 버튼 + 프리필)            | 14 · 15                                   |
 | STAT-01 월 요약 · 월 이동                | 5 · 10                                                    | 5 · 10 · 12                               |
 | STAT-02 카테고리별 비중                  | 5 · 10(도넛)                                              | 5 · 10                                    |
 | STAT-03 일별 히트맵                      | 5(`daily`) · 10(CSS grid)                                 | 5 · 10 · 12                               |
@@ -769,6 +772,61 @@ _인터랙션_
 > 물으면 답하지 못했다. `intents.ts`가 문장에서 월 표현을 추출해 `ChatPanel`이 그 달을 다시
 > 불러오도록 수정했다 — 이 과정에서 "월만 언급된 질문의 연도 기본값을 직전에 조회한 달의
 > 연도로 잘못 잡는" 버그도 함께 발견해 고쳤다(항상 실제 오늘 기준 연도를 기본값으로 쓰도록).
+
+---
+
+## Phase 14 — 영수증 인식 API
+
+**저장소**: `moneylog-backend` · **선행 조건**: Phase 6 완료 · **관련 요구사항**: `TXN-13`
+
+영수증 사진에서 날짜·카테고리·거래처·금액을 뽑아내는 건 규칙 기반 OCR로는 부족하다(상호명만 보고 카테고리를 판단하는 건 추론 영역). Vision 지원 LLM API를 호출해 이미지 한 장을 `{ txnDate, categoryName, merchant, amount }` JSON으로 바로 변환한다. **이 API는 거래를 등록하지 않는다** — 인식 결과만 돌려주고, 실제 등록은 기존 `POST /api/v1/transactions`가 그대로 담당한다(Phase 15가 프론트에서 연결).
+
+**작업**
+
+- `.env.example`에 `RECEIPT_VISION_API_KEY` 추가 (`CLAUDE.md` 10장 시크릿 관리 규칙과 동일하게 커밋하지 않음)
+- `controller/ReceiptController.java` — `POST /api/v1/receipts/parse` (`multipart/form-data`, 이미지 1장, `bearerAuth` 필요)
+- `service/ReceiptParseService.java` — 이미지를 Vision API에 전달해 후보 값을 받는다. **API 실패·타임아웃 시 예외를 던지지 않고 빈 필드로 응답한다** — 영수증 인식은 보조 수단이라 실패해도 사용자가 직접 입력하는 경로를 막지 않는다
+- 카테고리 이름 매칭은 CSV 가져오기(`CsvImportService`)의 이름 매칭 로직을 재사용한다. **매칭 실패 시 카테고리를 자동 생성하지 않고** `categoryId: null` + 인식된 `categoryName`만 응답에 담아 화면이 안내하게 한다 (`CLAUDE.md` 5장 CSV 규칙과 동일한 원칙)
+- 업로드 상한 5MB, `image/jpeg`·`image/png`·`image/heic`만 허용. 초과·형식 불일치는 400 `INVALID_INPUT`
+- `ErrorCode`에 `RECEIPT_PARSE_FAILED`(422) 추가 — Vision API 응답이 비어 있거나 파싱할 수 없을 때
+- Swagger에 노출
+- `moneylog-backend/CLAUDE.md`에 이번에 도입한 Vision API·환경변수를 기록한다
+
+**DoD**
+
+- [ ] 정상적인 영수증 이미지를 업로드하면 `{ txnDate, categoryName, merchant, amount }`를 응답으로 받는다 — `TXN-13`
+- [ ] 카테고리 이름이 사용자 카테고리와 매칭되면 `categoryId`가 채워지고, 매칭되지 않으면 `categoryId: null` + `categoryName`만 채워진다
+- [ ] 5MB 초과 또는 이미지가 아닌 파일 업로드 시 400 `INVALID_INPUT`
+- [ ] Vision API 실패를 흉내 낸 상황에서도 500이 아니라 `RECEIPT_PARSE_FAILED` + 빈 필드로 응답한다
+- [ ] 인증 토큰 없이 호출하면 401
+- [ ] Swagger UI에서 Authorize 후 실제 호출로 확인
+- [ ] `./mvnw test` 통과
+
+---
+
+## Phase 15 — 영수증 첨부 등록 화면
+
+**저장소**: `moneylog-frontend` · **선행 조건**: 백엔드 Phase 14 · **관련 요구사항**: `TXN-13`
+
+촬영 UI(카메라 강제 실행)는 만들지 않는다. 기기의 사진 앱·파일 선택기로 고른 이미지를 첨부하는 것까지만 다룬다 — 사진을 찍는 것은 OS 기본 카메라 앱의 몫이다.
+
+**작업**
+
+- `hooks/useReceiptParse.ts` — `/receipts/parse` 업로드 mutation
+- `components/transaction/QuickAddBar.tsx`에 "영수증 첨부" 버튼 추가 — `<input type="file" accept="image/*">`로 이미지 파일을 선택한다
+- 업로드 중에는 버튼에 로딩 상태만 표시한다(생성과 마찬가지로 **낙관적으로 채우지 않는다** — 서버 응답을 기다린 뒤 실제 값으로 채운다)
+- 응답을 받으면 퀵 입력 바의 금액·날짜·카테고리·거래처를 채운다. **자동 저장하지 않는다** — 사용자가 값을 확인·수정하고 기존 "저장" 버튼을 눌러야 등록된다
+- `categoryId`가 `null`로 오면 카테고리 select는 비워둔 채 나머지 필드만 채운다
+- 인식 자체가 실패(`RECEIPT_PARSE_FAILED`)하면 토스트로 "영수증을 읽지 못했어요. 직접 입력해 주세요" 안내(`sonner`) 후 폼은 빈 상태로 유지
+
+**DoD**
+
+- [ ] "영수증 첨부" 클릭 시 파일 선택 창이 뜨고, 이미지를 고르면 업로드가 시작된다
+- [ ] 인식 성공 시 퀵 입력 바 필드가 채워지고, "저장"을 눌러야 목록에 반영된다(자동 등록 아님) — `TXN-13`
+- [ ] 매칭되지 않는 카테고리는 select가 빈 채로 남고 나머지 필드는 채워진다
+- [ ] 인식 완전 실패 시 에러 토스트가 뜨고 폼은 수동 입력 가능한 빈 상태로 유지된다
+- [ ] 모바일(360px)·데스크톱 모두에서 버튼과 로딩 상태가 레이아웃을 깨지 않는다
+- [ ] `npx tsc --noEmit`, `npm run lint` 통과
 
 ---
 
