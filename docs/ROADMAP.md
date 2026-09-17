@@ -24,8 +24,8 @@
 | 11    | 예산 · 카테고리 · CSV 화면 + 인터랙션 다듬기 | frontend | ⬜   |
 | 12    | 전체 검증                                    | 전체     | ⬜   |
 | 13    | 챗봇 조회 위젯 (규칙 기반)                   | frontend | ✅   |
-| 14    | 영수증 인식 API                              | backend  | ⬜   |
-| 15    | 영수증 첨부 등록 화면                        | frontend | ⬜   |
+| 14    | 영수증 인식 API                              | backend  | 🟡   |
+| 15    | 영수증 첨부 등록 화면                        | frontend | 🟡   |
 
 ⬜ 대기 · 🟡 진행중 · ✅ 완료
 
@@ -794,13 +794,13 @@ _인터랙션_
 
 **DoD**
 
-- [ ] 정상적인 영수증 이미지를 업로드하면 `{ txnDate, categoryName, merchant, amount }`를 응답으로 받는다 — `TXN-13`
-- [ ] 카테고리 이름이 사용자 카테고리와 매칭되면 `categoryId`가 채워지고, 매칭되지 않으면 `categoryId: null` + `categoryName`만 채워진다
-- [ ] 5MB 초과 또는 이미지가 아닌 파일 업로드 시 400 `INVALID_INPUT`
-- [ ] Vision API 실패를 흉내 낸 상황에서도 500이 아니라 `RECEIPT_PARSE_FAILED` + 빈 필드로 응답한다
-- [ ] 인증 토큰 없이 호출하면 401
-- [ ] Swagger UI에서 Authorize 후 실제 호출로 확인
-- [ ] `./mvnw test` 통과
+- [ ] 정상적인 영수증 이미지를 업로드하면 `{ txnDate, categoryName, merchant, amount }`를 응답으로 받는다 — `TXN-13` ⚠️ **미검증**. `.env`의 `RECEIPT_VISION_API_KEY`가 비어 있어 실제 인식 성공 케이스를 확인하지 못했다. 키를 채운 뒤 실제 영수증 이미지로 확인해야 한다
+- [ ] 카테고리 이름이 사용자 카테고리와 매칭되면 `categoryId`가 채워지고, 매칭되지 않으면 `categoryId: null` + `categoryName`만 채워진다 ⚠️ 위와 같은 이유로 미검증
+- [x] 5MB 초과 또는 이미지가 아닌 파일 업로드 시 400 `INVALID_INPUT`
+- [x] Vision API 실패를 흉내 낸 상황에서도 500이 아니라 `RECEIPT_PARSE_FAILED` + 빈 필드로 응답한다 — API 키를 비워둔 상태에서 실제로 이 경로가 재현되어 검증됨
+- [x] 인증 토큰 없이 호출하면 401
+- [x] Swagger UI에서 Authorize 후 실제 호출로 확인 — `/v3/api-docs`에 노출 확인, 인증 토큰 포함 curl 호출로 등가 검증
+- [x] `./mvnw test` 통과 (83/83)
 
 ---
 
@@ -812,7 +812,7 @@ _인터랙션_
 
 **작업**
 
-- `hooks/useReceiptParse.ts` — `/receipts/parse` 업로드 mutation
+- `hooks/useReceipts.ts` — `/receipts/parse` 업로드 mutation
 - `components/transaction/QuickAddBar.tsx`에 "영수증 첨부" 버튼 추가 — `<input type="file" accept="image/*">`로 이미지 파일을 선택한다
 - 업로드 중에는 버튼에 로딩 상태만 표시한다(생성과 마찬가지로 **낙관적으로 채우지 않는다** — 서버 응답을 기다린 뒤 실제 값으로 채운다)
 - 응답을 받으면 퀵 입력 바의 금액·날짜·카테고리·거래처를 채운다. **자동 저장하지 않는다** — 사용자가 값을 확인·수정하고 기존 "저장" 버튼을 눌러야 등록된다
@@ -821,12 +821,12 @@ _인터랙션_
 
 **DoD**
 
-- [ ] "영수증 첨부" 클릭 시 파일 선택 창이 뜨고, 이미지를 고르면 업로드가 시작된다
-- [ ] 인식 성공 시 퀵 입력 바 필드가 채워지고, "저장"을 눌러야 목록에 반영된다(자동 등록 아님) — `TXN-13`
-- [ ] 매칭되지 않는 카테고리는 select가 빈 채로 남고 나머지 필드는 채워진다
-- [ ] 인식 완전 실패 시 에러 토스트가 뜨고 폼은 수동 입력 가능한 빈 상태로 유지된다
-- [ ] 모바일(360px)·데스크톱 모두에서 버튼과 로딩 상태가 레이아웃을 깨지 않는다
-- [ ] `npx tsc --noEmit`, `npm run lint` 통과
+- [x] "영수증 첨부" 클릭 시 파일 선택 창이 뜨고, 이미지를 고르면 업로드가 시작된다
+- [ ] 인식 성공 시 퀵 입력 바 필드가 채워지고, "저장"을 눌러야 목록에 반영된다(자동 등록 아님) — `TXN-13` ⚠️ **미검증**. 백엔드 Phase 14와 같은 이유(Vision API 키 없음)로 성공 케이스를 확인하지 못했다
+- [ ] 매칭되지 않는 카테고리는 select가 빈 채로 남고 나머지 필드는 채워진다 ⚠️ 위와 같은 이유로 미검증
+- [x] 인식 완전 실패 시 에러 토스트가 뜨고 폼은 수동 입력 가능한 빈 상태로 유지된다 — API 키가 비어 있어 실제로 `RECEIPT_PARSE_FAILED` 경로가 재현되어 검증됨
+- [x] 모바일(360px)·데스크톱 모두에서 버튼과 로딩 상태가 레이아웃을 깨지 않는다
+- [x] `npx tsc --noEmit`, `npm run lint` 통과
 
 ---
 
