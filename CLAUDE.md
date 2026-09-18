@@ -1,6 +1,6 @@
 # 포켓로그(PocketLog) 프로젝트 개발 가이드
 
-> **버전** 1.1 · **최종 수정** 2026-09-16
+> **버전** 1.2 · **최종 수정** 2026-09-18
 > 이 문서는 **기술 규칙의 단일 기준(Single Source of Truth)**이다.
 > 코드 생성 전 반드시 이 문서를 확인하고, 문서와 충돌하는 구현을 하지 않는다.
 > 문서에 없는 결정이 필요하면 임의로 진행하지 말고 먼저 질문한다.
@@ -80,9 +80,11 @@ moneylog-project/                # [저장소 1] 문서 저장소
         │   ├── ui/              # shadcn/ui
         │   ├── common/          # Pagination, EmptyState, ErrorState, Skeleton
         │   ├── chart/           # CategoryDonut, BudgetBar, MonthHeatmap
-        │   └── transaction/     # TransactionList, TransactionRow, QuickAddBar, TransactionForm
-        ├── hooks/               # useTransactions, useStats, useAuth
-        ├── lib/                 # apiClient, queryClient, money, date, utils
+        │   └── transaction/     # TransactionList, TransactionRow, QuickAddBar, TransactionForm,
+        │                        # TransactionEditDialog(목록 팝업 수정), LocationPickerDialog,
+        │                        # TransactionLocationDialog(위치 표시, TXN-14)
+        ├── hooks/               # useTransactions, useStats, useAuth, useTheme(다크모드 토글)
+        ├── lib/                 # apiClient, queryClient, money, date, utils, kakaoMap(카카오맵 SDK 지연 로드)
         └── types/
 ```
 
@@ -271,9 +273,13 @@ DB 스키마명: **`moneylog_db`** (소문자) · 테스트: **`moneylog_test`**
 | txn_date | DATE | NOT NULL |
 | merchant | VARCHAR(100) | NULL (거래처/상호) |
 | memo | VARCHAR(500) | NULL (**평문. HTML 아님**) |
+| latitude | DOUBLE | NULL (위치, `TXN-14`) |
+| longitude | DOUBLE | NULL (위치, `TXN-14`) |
 | created_at | TIMESTAMP | NOT NULL |
 | updated_at | TIMESTAMP | NOT NULL |
 | deleted_at | TIMESTAMP | NULL (Soft Delete) |
+
+> **`latitude`/`longitude`는 사용자가 프론트의 카카오맵 검색 팝업에서 지점을 고를 때만 채워진다.** 자유 텍스트인 `merchant`를 서버가 지오코딩하지 않는다 — 동명 지점이 여러 곳이라 부정확하다. 값의 출처가 사용자의 자유 입력이 아니므로 DTO에 범위 검증(`@DecimalMin`/`@DecimalMax`)을 두지 않는다.
 
 **인덱스**
 - `idx_txn_user_date` on `(user_id, txn_date DESC, deleted_at)` — 목록·월별 집계의 주 경로
@@ -487,7 +493,10 @@ Base path: `/api/v1`
 | PUT | `/api/v1/transactions/{id}` | 수정 (**전체 교체**) | `TransactionUpdateRequest` |
 | DELETE | `/api/v1/transactions/{id}` | Soft Delete | — |
 
-PUT은 부분 수정이 아니라 **전체 교체**다. `merchant`·`memo`를 누락하면 null로 저장된다(값 삭제로 취급). `amount`·`txnDate`·`categoryId`·`type`은 필수이므로 누락 시 400이다.
+PUT은 부분 수정이 아니라 **전체 교체**다. `merchant`·`memo`·`latitude`·`longitude`를 누락하면 null로 저장된다(값 삭제로 취급). `amount`·`txnDate`·`categoryId`·`type`은 필수이므로 누락 시 400이다.
+
+- `TransactionCreateRequest`/`TransactionUpdateRequest`에 `latitude`·`longitude`(선택, `Double`)를 둔다 — `TXN-14`. 프론트가 위치를 지우면 두 필드를 명시적으로 `undefined`로 보내 PUT 전체 교체 규칙대로 null이 저장되게 한다.
+- `TransactionResponse`에도 `latitude`·`longitude`를 그대로 내려준다.
 
 #### 목록 쿼리 파라미터
 
@@ -843,8 +852,8 @@ http
 - `/transactions` 상단에 **퀵 입력 바**를 둔다. 한 줄에 여섯 필드가 들어가고, 저장하면 목록 맨 위에 항목이 추가되며 **폼은 비워지되 날짜와 구분은 유지**한다(연속 입력 대비).
 - 모바일에서는 같은 폼이 세로로 쌓인다. 별도 화면을 만들지 않는다.
 - **최근 사용 카테고리 3개를 버튼으로 노출한다.** 별도 API를 만들지 않고, 이미 받아온 거래 목록의 앞쪽에서 중복 제거해 뽑는다.
-- 수정은 `/transactions/[id]`에서 한다. 이 화면은 같은 폼 컴포넌트(`TransactionForm`)를 초기값과 함께 재사용하고, 삭제 버튼만 추가로 노출한다.
-- 변경 사항이 있는 상태에서 이탈하려 하면 확인 대화상자를 띄운다(§9).
+- **목록에서 행을 누르면 페이지 이동 없이 팝업(`TransactionEditDialog`)으로 수정한다.** 같은 폼 컴포넌트(`TransactionForm`)를 초기값과 함께 재사용하고, 삭제 버튼만 추가로 노출한다. 팝업은 페이지를 벗어나지 않으므로 §9의 이탈 확인 3계층(`beforeunload`/버튼/`popstate`)이 필요 없다 — 닫기 시도 시 dirty면 확인창만 띄운다(퀵 입력 바와 같은 이유).
+  - `/transactions/[id]` 페이지 자체는 지우지 않고 **직접 링크·북마크로 들어왔을 때의 대체 경로**로 남긴다. 이 페이지는 원래 방식대로 §9의 3계층 이탈 가드를 그대로 쓴다.
 
 ---
 
@@ -852,30 +861,29 @@ http
 
 **방향**: 심플·모던. 장식보다 여백과 타이포그래피로 위계를 만든다.
 
-### 컬러 (Tailwind 4 `@theme` 토큰)
-- 배경 `#FAFAFA` / 다크 `#0A0A0A`
-- 카드 `#FFFFFF` / 다크 `#171717`
-- 텍스트 `#171717` / 다크 `#FAFAFA`, 보조 `#737373`
-- 액센트: **단일 컬러 1개만** (`#4F46E5`)
-- **수입 `#10B981` · 지출 `#EF4444`** — 이 둘은 액센트 규칙의 예외다. 금액의 방향을 색으로 구분하는 것이 이 앱의 핵심 정보이기 때문이다
-- 카테고리 팔레트 (색 미지정 시 순서대로 배정):
+### 컬러 (Tailwind 4 `@theme` 토큰) — Anthropic 브랜드 팔레트(Ivory/Slate/Clay)
+- 배경(Ivory) `#FAF9F5` / 다크 `#1A1918`
+- 카드 `#FFFFFF` / 다크 `#1F1E1D`
+- 텍스트(Slate) `#141413` / 다크 `#FAF9F5`, 보조 `#73726C` / 다크 `#9C9A92`
+- 액센트: **단일 컬러 1개만** (Clay `#D97757`)
+- **수입 `#558A42`(웜톤 그린) · 지출 `#B3452F`(웜톤 브릭레드)** — 이 둘은 액센트 규칙의 예외다. 금액의 방향을 색으로 구분하는 것이 이 앱의 핵심 정보이기 때문이다
+- 카테고리 팔레트 (색 미지정 시 순서대로 배정, 사용자 데이터 성격이라 브랜드 팔레트와 무관하게 유지):
   `#EF4444 #F59E0B #10B981 #4F46E5 #EC4899 #14B8A6 #8B5CF6 #F97316 #737373`
 
 ### 스타일 원칙
-- 그림자 대신 **1px border**(`#E5E5E5`)로 면 구분. 그림자는 모달/드롭다운에만.
+- 그림자 대신 **0.5px border**(`#DEDCD1`)로 면 구분. 그림자는 모달/드롭다운에만.
 - 라운드: 카드 `rounded-xl`, 버튼/인풋 `rounded-lg`
-- 폰트: **Pretendard**. ⚠️ **Google Fonts에 없으므로 `next/font/google`로 불러올 수 없다.** 폰트 파일(`.woff2`)을 `src/app/fonts/`에 넣고 **`next/font/local`**로 로드한다. 가변 폰트(`PretendardVariable.woff2`) 하나면 충분하다.
+- 폰트: 본문은 **Pretendard**. ⚠️ **Google Fonts에 없으므로 `next/font/google`로 불러올 수 없다.** 폰트 파일(`.woff2`)을 `src/app/fonts/`에 넣고 **`next/font/local`**로 로드한다. 가변 폰트(`PretendardVariable.woff2`) 하나면 충분하다.
+  - **헤딩은 세리프**(`--font-heading`, Georgia 폴백)를 쓴다. Anthropic 전용 서체 파일은 번들되어 있지 않으므로 이름을 지정하지 않고 바로 폴백 스택으로 시작한다. 로그인/회원가입 타이틀, 거래 상세 타이틀, `DialogTitle`(shadcn) 등 화면·다이얼로그 제목에 적용한다. 본문·라벨·입력값은 그대로 Pretendard.
 - 본문 15px / 항목 제목 16px semibold / 캡션 13px
 - **금액은 `tabular-nums`를 적용한다.** 비례 숫자로 두면 목록에서 자릿수가 세로로 어긋나 읽기 어렵다. Tailwind의 `tabular-nums` 유틸리티 한 줄이다
 - 컨테이너 `max-w-5xl`(대시보드는 차트가 있어 표본보다 넓다), 패딩 모바일 16px · 데스크톱 24px
-- **다크 모드**: 토큰을 라이트/다크 양쪽으로 정의하고 **`@media (prefers-color-scheme: dark)`로 전환**한다. 토글 UI는 MVP 범위 밖이다.
-  > ⚠️ **`class` 전략을 쓰지 않는다.** 토글이 없는데 `class` 전략을 쓰면 서버 렌더 시점에 클래스가 없어 라이트로 그려졌다가 클라이언트에서 다크로 바뀌는 깜빡임(FOUC)이 생긴다. 미디어쿼리는 CSS만으로 처리되어 hydration 문제가 아예 없다.
-  > ⚠️ **`@theme`을 `@media` 안에 중첩하지 않는다.** Tailwind v4에서 `@theme`은 **최상위에만 올 수 있다.** 라이트 값을 `@theme`에 한 번 선언해 유틸리티를 만들고, **다크에서는 생성된 커스텀 프로퍼티를 `:root`에서 덮어쓴다.**
+- **다크 모드**: 토큰을 라이트/다크 양쪽으로 정의하고, 헤더의 아이콘 버튼으로 **사용자가 직접 전환하는 토글**을 둔다(`UX-09`). 선택값은 `localStorage`에 저장되어 재방문 시 유지되고, 선택하지 않았다면 `prefers-color-scheme`(OS 설정)을 따른다.
+  > ⚠️ **class 전략(`:root.dark`)을 쓴다.** 토글이 있는 이상 미디어쿼리만으로는 "시스템과 다른 모드를 명시적으로 고르는" 요구를 만족할 수 없다. 다만 하이드레이션 이후에 클래스를 붙이면 라이트로 그려졌다가 다크로 바뀌는 FOUC가 그대로 재현되므로, **루트 레이아웃의 `<head>`에 하이드레이션 전 동기 실행되는 인라인 스크립트**를 둔다 — `localStorage`에 저장된 값(없으면 시스템 선호)으로 `<html>`에 `.dark`를 미리 붙인다. `useTheme` 훅은 그 결과를 초기 상태로 읽기만 하고, 토글 시 클래스와 `localStorage`를 함께 갱신한다.
+  > ⚠️ **`@theme`을 `@media`/클래스 선택자 안에 중첩하지 않는다.** Tailwind v4에서 `@theme`은 **최상위에만 올 수 있다.** 라이트 값을 `@theme`에 한 번 선언해 유틸리티를 만들고, **다크에서는 생성된 커스텀 프로퍼티를 `:root.dark`에서 덮어쓴다.**
   > ```css
-  > @theme { --color-bg: #FAFAFA; }                        /* 유틸리티 생성 */
-  > @media (prefers-color-scheme: dark) {
-  >   :root { --color-bg: #0A0A0A; }                       /* 값만 교체 */
-  > }
+  > @theme { --color-bg: #FAF9F5; }   /* 유틸리티 생성 */
+  > :root.dark { --color-bg: #1A1918; } /* 값만 교체 */
   > ```
 
 ### ⚠️ 금액 입력에 `<input type="number">`를 쓰지 않는다 (중요)
@@ -1092,7 +1100,10 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 `moneylog-frontend/.env.example`:
 ```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+NEXT_PUBLIC_KAKAO_MAP_KEY=            # Kakao Developers JavaScript 키. 플랫폼>Web에 도메인 등록 필요(TXN-14)
 ```
+
+> ⚠️ **카카오맵 JS 키는 Kakao Developers 콘솔의 "플랫폼 > Web"에 쓰는 도메인(포트 포함, 예: `http://localhost:3000`)이 등록돼야 동작한다.** 등록하지 않으면 SDK 스크립트 요청이 401로 거부되어 지도가 뜨지 않는다. 앱에 JS 키가 여러 개 있다면 **도메인 등록은 키 단위**이므로, `.env.local`에 넣은 키와 실제로 도메인을 등록한 키가 같은지 확인한다.
 
 각 저장소의 `.gitignore`에 아래를 넣는다. **`.env*`만 쓰면 `.env.example`까지 무시되므로 예외 줄이 반드시 필요하다.**
 

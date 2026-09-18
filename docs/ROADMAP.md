@@ -1,6 +1,6 @@
 # ROADMAP — 포켓로그(PocketLog)
 
-> **버전** 1.4 · **최종 수정** 2026-09-17
+> **버전** 1.5 · **최종 수정** 2026-09-18
 > 이 문서는 "어떤 순서로 만드는가"를 정의하며, **완료 판정의 정본**이다.
 > **한 번에 전체를 생성하지 않는다.** Phase 단위로 진행하고, 각 Phase의 DoD를 모두 만족한 뒤 다음으로 넘어간다.
 > 기술 규칙은 `CLAUDE.md`, 기능 정의는 `PRD.md` 참조.
@@ -26,6 +26,9 @@
 | 13    | 챗봇 조회 위젯 (규칙 기반)                   | frontend | ✅   |
 | 14    | 영수증 인식 API                              | backend  | 🟡   |
 | 15    | 영수증 첨부 등록 화면                        | frontend | 🟡   |
+| 16    | 거래 위치 표시 (카카오맵)                    | 전체     | ✅   |
+| 17    | 거래 수정을 목록 팝업으로 전환                | frontend | ✅   |
+| 18    | 다크모드 토글 · 브랜드 리디자인              | frontend | ✅   |
 
 ⬜ 대기 · 🟡 진행중 · ✅ 완료
 
@@ -71,11 +74,12 @@
 | TXN-06 날짜 내림차순 + 2차 정렬 키       | 4                                                         | 4(페이지 경계 중복·누락) · 12             |
 | TXN-07 20건 페이지네이션 · 필터          | 4 · 9                                                     | 4 · 9 · 12                                |
 | TXN-08 거래처·메모 검색                  | 4 · 9                                                     | 4 · 9 · 12                                |
-| TXN-09 상세 편집 + 이탈 확인             | 4(PUT) · 9(3계층 가드)                                    | 9 · 12                                    |
+| TXN-09 상세 편집 + 이탈 확인             | 4(PUT) · 9(3계층 가드) · 17(목록 팝업으로 전환)           | 9 · 12 · 17                               |
 | TXN-10 삭제 즉시 반영 / Soft Delete      | 4 · 9(상세→목록) · 11(낙관적 제거)                        | 4 · 9 · 11 · 12                           |
 | TXN-11 실패 시 롤백·알림                 | **9(저장 실패: 폼 유지 + 에러)** · 11(삭제 롤백 + 토스트) | 9 · 11 · 12                               |
 | TXN-12 타인 거래 차단                    | 4(404) · 9(전용 화면)                                     | 4 · 9 · 12                                |
 | TXN-13 영수증 첨부 인식                  | 15(브라우저 OCR + 첨부 버튼 + 프리필). 14는 철회          | 15                                        |
+| TXN-14 위치 지정·표시 (카카오맵)         | 16(위도·경도 컬럼·DTO) · 16(검색 팝업·목록 아이콘)        | 16                                        |
 | STAT-01 월 요약 · 월 이동                | 5 · 10                                                    | 5 · 10 · 12                               |
 | STAT-02 카테고리별 비중                  | 5 · 10(도넛)                                              | 5 · 10                                    |
 | STAT-03 일별 히트맵                      | 5(`daily`) · 10(CSS grid)                                 | 5 · 10 · 12                               |
@@ -103,6 +107,7 @@
 | UX-06 label · 키보드 완주                | 8 · 9                                                     | 9 · 12                                    |
 | UX-07 다크 토큰 (`prefers-color-scheme`) | 7                                                         | 7 · 12                                    |
 | UX-08 금액 `tabular-nums`                | 7(토큰) · 9                                               | 9 · 12                                    |
+| UX-09 다크모드 토글                      | 18(class 전략 + FOUC 방지 스크립트 + 헤더 버튼)           | 18                                        |
 | CHAT-01 플로팅 버튼 열기/닫기            | 13                                                        | 13                                        |
 | CHAT-02 이번 달 요약 조회                | 13(`useMonthlyStatsQuery` 재사용)                         | 13                                        |
 | CHAT-03 카테고리별 지출 조회             | 13(`useCategoriesQuery` + `byCategory` 매칭)              | 13                                        |
@@ -424,8 +429,8 @@ _CSV_
 - [x] `npm run dev`·`npm run build`·`npm run lint` 전부 통과
 - [x] `package.json`에 **`recharts`·`react-hook-form`·`zod`·`framer-motion`이 없음**
 - [x] `next --version`이 15.x
-- [x] `globals.css`에 **`.dark` 셀렉터·`@custom-variant`가 없음**
-- [x] OS 다크 모드를 켜면 배경·텍스트가 바뀜 (`prefers-color-scheme` 동작)
+- [x] `globals.css`에 **`.dark` 셀렉터·`@custom-variant`가 없음** — ⚠️ **Phase 18에서 뒤집힘**: 다크모드 토글(`UX-09`)이 생기면서 `:root.dark` 클래스 전략으로 전환했다. 이 항목은 "토글이 없던 시점"의 기록으로 남겨두고, 현재 기준은 Phase 18 DoD가 정본이다
+- [x] OS 다크 모드를 켜면 배경·텍스트가 바뀜 (`prefers-color-scheme` 동작) — Phase 18 이후에도 **선택값이 없을 때의 기본 동작**으로 유지됨
 - [x] `public/static` 디렉토리가 없음
 - [x] `next.config.ts`에 `distDir`이 없음
 - [x] Pretendard가 적용됨 (`next/font/local`, Google Fonts 요청 없음)
@@ -814,6 +819,92 @@ _인터랙션_
 > ⚠️ **순수 OCR의 한계는 남아 있다.** 배경이 섞이거나 기울어진 사진(책상 위에서 찍은 감열지 영수증 등)은 Tesseract의 레이아웃 분석이 무너져 사실상 인식하지 못한다. 자동 크롭/기울기 보정은 안정적으로 일반화하기 어려워 도입하지 않았고, 대신 퀵 입력 바에 촬영 안내 문구를 뒀다.
 - [x] 모바일(360px)·데스크톱 모두에서 버튼과 로딩 상태가 레이아웃을 깨지 않는다
 - [x] `npx tsc --noEmit`, `npm run lint` 통과
+
+---
+
+## Phase 16 — 거래 위치 표시 (카카오맵)
+
+**저장소**: 전체(`moneylog-backend` + `moneylog-frontend`) · **선행 조건**: 백엔드 Phase 4 · 프론트 Phase 9 · **관련 요구사항**: TXN-14
+
+사용자가 직접 지도에서 지점을 검색해 좌표를 고르는 방식이다. `merchant` 자유 텍스트를 서버가 자동 지오코딩하지 않는다 — 동명 지점이 여러 곳이라 부정확하다. 카카오맵은 `react-kakao-maps-sdk` 같은 래퍼 없이 JS SDK를 `<script>`로 직접, 다이얼로그를 열 때만 지연 로드한다.
+
+**작업**
+
+_백엔드_
+- `Transaction`에 `latitude`/`longitude`(둘 다 nullable `Double`) 추가, 생성자·`update()`·getter에 반영
+- `TransactionCreateRequest`·`TransactionUpdateRequest`·`TransactionResponse`에 필드 추가(범위 검증 없음 — 값이 지도 SDK 선택 결과에서만 온다)
+- `DataService`(CSV 가져오기)는 좌표 데이터가 없으므로 `null, null` 명시
+
+_프론트엔드_
+- `lib/kakaoMap.ts` — SDK 스크립트를 최초 필요 시점(다이얼로그를 열 때)에만 주입하는 지연 로드 싱글턴
+- `types/kakao-maps.d.ts` — `@types/kakao.maps` 설치 없이 `any` 없는 최소 앰비언트 선언
+- `LocationPickerDialog`(신규) — 검색어 입력 + 지도 마커 + 결과 목록에서 지점 선택
+- `TransactionLocationDialog`(신규) — 저장된 좌표를 보여주는 읽기 전용 지도
+- `TransactionForm`에 거래처 옆 위치 선택/지우기 버튼, `TransactionRow`에 위치 아이콘
+
+**DoD**
+
+- [x] `ddl-auto: update`로 `latitude`/`longitude` 컬럼이 자동 추가됨(Hibernate 로그로 확인)
+- [x] "이마트" 검색 → 지점 선택 → 등록 → 목록 행에 위치 아이콘 노출
+- [x] 위치 아이콘 클릭 시 그 좌표로 읽기 전용 지도가 뜸
+- [x] 위치를 지정하지 않은 거래에는 아이콘이 뜨지 않음(회귀 확인)
+- [x] 이미 위치가 있는 거래를 다시 열어 다른 지점을 고르면 좌표·거래처명이 새 지점으로 갱신됨
+  > 🐛 **발견 및 수정**: 최초 구현은 `merchant: values.merchant || location.name`이라 거래처가 이미 채워진 상태에서 새 지점을 골라도 이름이 갱신되지 않았다. 항상 `location.name`으로 덮어쓰도록 수정(`TransactionForm.tsx`)
+- [x] 로컬 개발 시 카카오 JS 키를 Kakao Developers "플랫폼 > Web"에 `http://localhost:3000`으로 등록해야 SDK가 로드됨(미등록 시 401로 조용히 실패하지 않고 다이얼로그에 에러 문구 표시)
+- [x] `./mvnw compile`·`test-compile`, `npx tsc --noEmit`, `npm run lint`, `npm run build` 통과
+
+---
+
+## Phase 17 — 거래 수정을 목록 팝업으로 전환
+
+**저장소**: `moneylog-frontend` · **선행 조건**: Phase 9·16 · **관련 요구사항**: TXN-09
+
+`/transactions/[id]` 페이지로 이동하던 것을 목록 행 클릭 시 팝업(`TransactionEditDialog`)으로 바꾼다. 페이지 자체는 지우지 않고 직접 링크·북마크 접근용 대체 경로로 남긴다.
+
+**작업**
+
+- `TransactionEditDialog`(신규) — `TransactionForm`을 감싼 팝업. dirty 상태로 닫으려 하면 "저장하지 않은 변경 사항" 확인창을 띄운다
+  - 페이지를 벗어나지 않으므로 `useUnsavedChangesGuard`(beforeunload/버튼/popstate 3계층)를 쓰지 않는다 — 퀵 입력 바가 가드가 필요 없는 것과 같은 이유(`CLAUDE.md` §9)
+- `TransactionRow` — 행을 감싸던 `<Link href="/transactions/{id}">`를 `<button onClick>`으로 교체. 삭제 버튼이 더 이상 `<Link>`에 중첩되지 않아 `preventDefault`/`stopPropagation`이 불필요해짐
+- `TransactionForm`에 `layout?: "inline" | "stacked"` prop 추가 — 퀵 입력 바(`inline`, 기존 한 줄 배치 그대로)와 팝업(`stacked`, 필드별 한 줄)을 하나의 컴포넌트로 분기. 팝업 전용 조정: 지출/수입 버튼 확대(`flex-1`), 라벨 좌측 정렬, 카테고리 선택값 좌측 정렬(플레이스홀더는 가운데 유지 — `data-placeholder:` 변형자로 상태 구분)
+
+**DoD**
+
+- [x] 목록 행 클릭 시 페이지 이동 없이 팝업이 열림
+- [x] 팝업에서 값을 고치고 저장하면 목록에 반영되고 팝업이 닫힘
+- [x] 값을 바꾼 채 닫으려 하면(X 버튼·바깥 클릭·Esc 전부) 확인창이 뜨고, "계속 편집" 선택 시 값이 유지됨
+- [x] `/transactions/[id]`에 직접 접속하면 기존 페이지가 그대로 동작함(회귀 없음)
+- [x] 퀵 입력 바(`QuickAddBar`)의 레이아웃이 이번 변경으로 바뀌지 않음(`layout="inline"`이 기본값)
+- [x] `npx tsc --noEmit`, `npm run lint`, `npm run build` 통과
+
+---
+
+## Phase 18 — 다크모드 토글 · 브랜드 리디자인
+
+**저장소**: `moneylog-frontend` · **관련 요구사항**: `UX-09`, 색상·타이포(`CLAUDE.md` 8장)
+
+Claude 아티팩트 디자인 캔버스로 두 방향(Warm Editorial / Structured Minimal)을 시안으로 만들어 비교한 뒤 Warm Editorial — Anthropic 브랜드 팔레트(Ivory/Slate/Clay)를 채택했다. 같은 세션에서 `UX-09`(다크모드 토글)를 `PRD.md` 3.7의 P2·범위 밖에서 **P0로 승격**해 함께 구현했다 — `CLAUDE.md`가 경고해 둔 "토글 없이 class 전략을 쓰면 FOUC" 문제를, 토글이 생긴 만큼 인라인 스크립트로 정면 대응한다.
+
+**작업**
+
+- `globals.css` — 배경/카드/텍스트/포커스링을 Ivory `#FAF9F5`·Slate `#141413`·Clay `#D97757`로 재매핑, 다크는 warm grayscale 톤으로 조정. 수입/지출은 웜톤 그린/브릭레드(`#558A42`/`#B3452F`)로 유지 — 액센트 규칙의 예외라는 원칙 자체는 그대로
+- `@media (prefers-color-scheme: dark) { :root {...} }` → `:root.dark {...}` 클래스 선택자로 전환
+- `--font-heading`을 세리프(Georgia 폴백. Anthropic 전용 서체는 번들되어 있지 않아 이름 없이 폴백부터 시작)로 변경 — 로그인·회원가입·거래상세 타이틀과 `DialogTitle`(shadcn, 이미 `font-heading` 참조 중)에 자동 반영
+- 루트 `layout.tsx`의 `<head>`에 하이드레이션 전 동기 실행 인라인 스크립트 추가 — `localStorage` 선택값(없으면 `prefers-color-scheme`)으로 `<html>`에 `.dark`를 미리 붙여 FOUC 방지
+- `hooks/useTheme.ts`(신규) — 이미 적용된 `.dark` 클래스 상태를 초기값으로 읽고, 토글 시 클래스와 `localStorage`를 함께 갱신
+- `Header.tsx` — 닉네임과 로그아웃 버튼 사이에 Sun/Moon 아이콘 토글 버튼 추가
+- 카테고리 색 9종은 사용자 데이터 성격이라 변경하지 않음(`CLAUDE.md` 8장)
+
+> **되돌린 시도 하나**: 디자인 리뷰의 "Structured Minimal" 방향(다크 Slate 좌측 사이드바 셸 + 테이블형 목록)도 한 차례 실제 코드로 구현했으나, 사용자가 반려해 상단 헤더 + 카드형 목록으로 되돌렸다. `Header.tsx`/`(main)/layout.tsx`가 그 되돌림의 최종 상태이고, 팔레트·세리프 헤딩은 두 방향의 공통 요소라 유지됐다.
+
+**DoD**
+
+- [x] 헤더의 해/달 아이콘으로 다크/라이트가 전환되고, 새로고침해도 선택값이 유지됨(`localStorage`)
+- [x] 처음 방문(저장된 선택값 없음)했을 때는 OS 다크모드 설정을 따름
+- [x] 다크 ↔ 라이트 전환 시 반대 테마로 그려졌다 바뀌는 깜빡임이 없음(하이드레이션 전 스크립트 적용 확인)
+- [x] 로그인·회원가입·거래상세 타이틀이 세리프로 렌더링됨
+- [x] 카테고리 색 점 9종이 이전과 동일함(팔레트 변경 영향 없음)
+- [x] `npx tsc --noEmit`, `npm run lint`, `npm run build` 통과
 
 ---
 
