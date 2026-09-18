@@ -75,7 +75,7 @@
 | TXN-10 삭제 즉시 반영 / Soft Delete      | 4 · 9(상세→목록) · 11(낙관적 제거)                        | 4 · 9 · 11 · 12                           |
 | TXN-11 실패 시 롤백·알림                 | **9(저장 실패: 폼 유지 + 에러)** · 11(삭제 롤백 + 토스트) | 9 · 11 · 12                               |
 | TXN-12 타인 거래 차단                    | 4(404) · 9(전용 화면)                                     | 4 · 9 · 12                                |
-| TXN-13 영수증 첨부 인식                  | 14(`/receipts/parse`) · 15(첨부 버튼 + 프리필)            | 14 · 15                                   |
+| TXN-13 영수증 첨부 인식                  | 15(브라우저 OCR + 첨부 버튼 + 프리필). 14는 철회          | 15                                        |
 | STAT-01 월 요약 · 월 이동                | 5 · 10                                                    | 5 · 10 · 12                               |
 | STAT-02 카테고리별 비중                  | 5 · 10(도넛)                                              | 5 · 10                                    |
 | STAT-03 일별 히트맵                      | 5(`daily`) · 10(CSS grid)                                 | 5 · 10 · 12                               |
@@ -775,56 +775,43 @@ _인터랙션_
 
 ---
 
-## Phase 14 — 영수증 인식 API
+## Phase 14 — 영수증 인식 API ❌ 철회 (백엔드에서 제거됨)
 
-**저장소**: `moneylog-backend` · **선행 조건**: Phase 6 완료 · **관련 요구사항**: `TXN-13`
+**저장소**: `moneylog-backend` · **관련 요구사항**: `TXN-13`
 
-영수증 사진에서 날짜·카테고리·거래처·금액을 뽑아내는 건 규칙 기반 OCR로는 부족하다(상호명만 보고 카테고리를 판단하는 건 추론 영역). Vision 지원 LLM API를 호출해 이미지 한 장을 `{ txnDate, categoryName, merchant, amount }` JSON으로 바로 변환한다. **이 API는 거래를 등록하지 않는다** — 인식 결과만 돌려주고, 실제 등록은 기존 `POST /api/v1/transactions`가 그대로 담당한다(Phase 15가 프론트에서 연결).
+원래는 Vision 지원 LLM API(`POST /api/v1/receipts/parse` → `ReceiptParseService`)로 구현했으나, **API 키 없이 동작하는 방식으로 바꾸면서 백엔드 코드를 전부 제거했다.** 인식은 이제 프론트엔드가 브라우저에서 Tesseract.js로 수행한다(Phase 15 참조).
 
-**작업**
+제거한 것: `ReceiptController` · `ReceiptParseService` · `ReceiptParseResponse` · `ErrorCode.RECEIPT_PARSE_FAILED` · `receipt.vision.*` 설정 · `RECEIPT_VISION_API_KEY`. 되살리지 않는다.
 
-- `.env.example`에 `RECEIPT_VISION_API_KEY` 추가 (`CLAUDE.md` 10장 시크릿 관리 규칙과 동일하게 커밋하지 않음)
-- `controller/ReceiptController.java` — `POST /api/v1/receipts/parse` (`multipart/form-data`, 이미지 1장, `bearerAuth` 필요)
-- `service/ReceiptParseService.java` — 이미지를 Vision API에 전달해 후보 값을 받는다. **API 실패·타임아웃 시 예외를 던지지 않고 빈 필드로 응답한다** — 영수증 인식은 보조 수단이라 실패해도 사용자가 직접 입력하는 경로를 막지 않는다
-- 카테고리 이름 매칭은 CSV 가져오기(`CsvImportService`)의 이름 매칭 로직을 재사용한다. **매칭 실패 시 카테고리를 자동 생성하지 않고** `categoryId: null` + 인식된 `categoryName`만 응답에 담아 화면이 안내하게 한다 (`CLAUDE.md` 5장 CSV 규칙과 동일한 원칙)
-- 업로드 상한 5MB, `image/jpeg`·`image/png`·`image/heic`만 허용. 초과·형식 불일치는 400 `INVALID_INPUT`
-- `ErrorCode`에 `RECEIPT_PARSE_FAILED`(422) 추가 — Vision API 응답이 비어 있거나 파싱할 수 없을 때
-- Swagger에 노출
-- `moneylog-backend/CLAUDE.md`에 이번에 도입한 Vision API·환경변수를 기록한다
-
-**DoD**
-
-- [ ] 정상적인 영수증 이미지를 업로드하면 `{ txnDate, categoryName, merchant, amount }`를 응답으로 받는다 — `TXN-13` ⚠️ **미검증**. `.env`의 `RECEIPT_VISION_API_KEY`가 비어 있어 실제 인식 성공 케이스를 확인하지 못했다. 키를 채운 뒤 실제 영수증 이미지로 확인해야 한다
-- [ ] 카테고리 이름이 사용자 카테고리와 매칭되면 `categoryId`가 채워지고, 매칭되지 않으면 `categoryId: null` + `categoryName`만 채워진다 ⚠️ 위와 같은 이유로 미검증
-- [x] 5MB 초과 또는 이미지가 아닌 파일 업로드 시 400 `INVALID_INPUT`
-- [x] Vision API 실패를 흉내 낸 상황에서도 500이 아니라 `RECEIPT_PARSE_FAILED` + 빈 필드로 응답한다 — API 키를 비워둔 상태에서 실제로 이 경로가 재현되어 검증됨
-- [x] 인증 토큰 없이 호출하면 401
-- [x] Swagger UI에서 Authorize 후 실제 호출로 확인 — `/v3/api-docs`에 노출 확인, 인증 토큰 포함 curl 호출로 등가 검증
-- [x] `./mvnw test` 통과 (83/83)
+> 남은 흔적 하나: `multipart.max-file-size`는 영수증(5MB) 때문에 올렸던 값을 2MB로 되돌렸다. CSV 상한(1MB)보다 여전히 한 단계 높은 이유는 `moneylog-backend/CLAUDE.md`에 적어뒀다.
 
 ---
 
 ## Phase 15 — 영수증 첨부 등록 화면
 
-**저장소**: `moneylog-frontend` · **선행 조건**: 백엔드 Phase 14 · **관련 요구사항**: `TXN-13`
+**저장소**: `moneylog-frontend` · **선행 조건**: 없음(Phase 14는 철회) · **관련 요구사항**: `TXN-13`
 
 촬영 UI(카메라 강제 실행)는 만들지 않는다. 기기의 사진 앱·파일 선택기로 고른 이미지를 첨부하는 것까지만 다룬다 — 사진을 찍는 것은 OS 기본 카메라 앱의 몫이다.
 
+**인식은 브라우저 안에서 끝난다.** `lib/receipts.ts`가 Tesseract.js(WASM OCR)로 텍스트를 뽑고 키워드·정규식 휴리스틱으로 날짜·거래처·금액·카테고리를 추정한다. 서버 호출도 API 키도 없다.
+
 **작업**
 
-- `hooks/useReceipts.ts` — `/receipts/parse` 업로드 mutation
+- `lib/receipts.ts` — Tesseract.js OCR + 필드 추정. `hooks/useReceipts.ts`는 이걸 감싼 mutation일 뿐이다
 - `components/transaction/QuickAddBar.tsx`에 "영수증 첨부" 버튼 추가 — `<input type="file" accept="image/*">`로 이미지 파일을 선택한다
 - 업로드 중에는 버튼에 로딩 상태만 표시한다(생성과 마찬가지로 **낙관적으로 채우지 않는다** — 서버 응답을 기다린 뒤 실제 값으로 채운다)
 - 응답을 받으면 퀵 입력 바의 금액·날짜·카테고리·거래처를 채운다. **자동 저장하지 않는다** — 사용자가 값을 확인·수정하고 기존 "저장" 버튼을 눌러야 등록된다
 - `categoryId`가 `null`로 오면 카테고리 select는 비워둔 채 나머지 필드만 채운다
-- 인식 자체가 실패(`RECEIPT_PARSE_FAILED`)하면 토스트로 "영수증을 읽지 못했어요. 직접 입력해 주세요" 안내(`sonner`) 후 폼은 빈 상태로 유지
+- 한 필드도 인식하지 못하면 토스트로 "영수증을 읽지 못했어요. 직접 입력해 주세요" 안내(`sonner`) 후 폼은 빈 상태로 유지
 
 **DoD**
 
-- [x] "영수증 첨부" 클릭 시 파일 선택 창이 뜨고, 이미지를 고르면 업로드가 시작된다
-- [ ] 인식 성공 시 퀵 입력 바 필드가 채워지고, "저장"을 눌러야 목록에 반영된다(자동 등록 아님) — `TXN-13` ⚠️ **미검증**. 백엔드 Phase 14와 같은 이유(Vision API 키 없음)로 성공 케이스를 확인하지 못했다
-- [ ] 매칭되지 않는 카테고리는 select가 빈 채로 남고 나머지 필드는 채워진다 ⚠️ 위와 같은 이유로 미검증
-- [x] 인식 완전 실패 시 에러 토스트가 뜨고 폼은 수동 입력 가능한 빈 상태로 유지된다 — API 키가 비어 있어 실제로 `RECEIPT_PARSE_FAILED` 경로가 재현되어 검증됨
+- [x] "영수증 첨부" 클릭 시 파일 선택 창이 뜨고, 이미지를 고르면 인식이 시작된다
+- [x] 인식 성공 시 퀵 입력 바 필드가 채워지고, "저장"을 눌러야 목록에 반영된다(자동 등록 아님) — `TXN-13`. 카드 결제 확인 화면 영수증으로 금액·카테고리·거래처·날짜 4개 필드 모두 정확히 채워지는 것을 확인
+- [x] 매칭되지 않는 카테고리는 select가 빈 채로 남고 나머지 필드는 채워진다 — "업종" 값이 사전에 없거나 사용자 카테고리와 이름이 다르면 `categoryId: null`로 남는다
+- [x] 한 필드도 못 읽으면 에러 토스트가 뜨고 폼은 수동 입력 가능한 빈 상태로 유지된다
+
+> ⚠️ **순수 OCR의 한계는 남아 있다.** 배경이 섞이거나 기울어진 사진(책상 위에서 찍은 감열지 영수증 등)은 Tesseract의 레이아웃 분석이 무너져 사실상 인식하지 못한다. 자동 크롭/기울기 보정은 안정적으로 일반화하기 어려워 도입하지 않았고, 대신 퀵 입력 바에 촬영 안내 문구를 뒀다.
 - [x] 모바일(360px)·데스크톱 모두에서 버튼과 로딩 상태가 레이아웃을 깨지 않는다
 - [x] `npx tsc --noEmit`, `npm run lint` 통과
 

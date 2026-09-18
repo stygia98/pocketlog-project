@@ -74,8 +74,7 @@ moneylog-project/                # [저장소 1] 문서 저장소
         │       ├── transactions/
         │       │   ├── page.tsx        # 목록 + 퀵 입력 바
         │       │   └── [id]/page.tsx   # 상세(편집)
-        │       ├── budgets/page.tsx
-        │       ├── settings/categories/page.tsx
+        │       ├── budgets/page.tsx    # 예산 설정 + 카테고리 관리(한 화면)
         │       └── data/page.tsx       # CSV 가져오기/내보내기
         ├── components/
         │   ├── ui/              # shadcn/ui
@@ -830,8 +829,7 @@ http
 | `/dashboard` | 월 대시보드 (요약·차트·예측·예산) | O |
 | `/transactions` | 거래 목록 + **퀵 입력 바** (필터/검색/페이지네이션) | O |
 | `/transactions/[id]` | 거래 상세 (항상 편집 가능) | O |
-| `/budgets` | 카테고리별 월 예산 설정 | O |
-| `/settings/categories` | 카테고리 관리 | O |
+| `/budgets` | 카테고리별 월 예산 설정 + 카테고리 관리 | O |
 | `/data` | CSV 가져오기 / 내보내기 | O |
 
 - 미인증 상태로 보호된 경로 접근 시 `/login`으로 리다이렉트.
@@ -1033,7 +1031,7 @@ function isExpired(token: string): boolean {
   > ⚠️ **페이지 이동은 `onMutate`가 아니라 `onSuccess`에서 한다.** `onMutate`에서 이동하면 쿼리 키가 바뀌어, 삭제 실패 시 `onError`의 롤백이 **사용자가 보고 있지 않은 캐시에 적용된다.**
 - **`/transactions/[id]`에서 404**: 목록으로 리다이렉트하지 않고 **"거래 내역을 찾을 수 없습니다" 화면과 목록으로 가기 버튼**을 보여준다. Next.js `notFound()`는 쓰지 않는다(클라이언트 데이터 페칭이므로).
 - **거래가 없는 달의 대시보드**: 에러가 아니라 **모두 0인 정상 상태**다. 차트 자리에 "이 달에는 기록이 없어요"를 보여주고, 월 이동 버튼은 그대로 동작해야 한다.
-- **카테고리가 하나도 없는 경우**: 가입 시 자동 생성(§6)되므로 사용자가 전부 지운 경우에만 발생한다. 퀵 입력 바를 비활성화하고 "카테고리를 먼저 만들어 주세요" + `/settings/categories` 링크를 보여준다.
+- **카테고리가 하나도 없는 경우**: 가입 시 자동 생성(§6)되므로 사용자가 전부 지운 경우에만 발생한다. 퀵 입력 바를 비활성화하고 "카테고리를 먼저 만들어 주세요" + `/budgets` 링크를 보여준다.
 
 ### 페이지네이션 공용 컴포넌트
 `src/components/common/Pagination.tsx`
