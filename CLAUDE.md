@@ -80,6 +80,8 @@ moneylog-project/                # [저장소 1] 문서 저장소
         │   ├── ui/              # shadcn/ui
         │   ├── common/          # Pagination, EmptyState, ErrorState, Skeleton
         │   ├── chart/           # CategoryDonut, BudgetBar, MonthHeatmap
+        │   ├── illustration/    # Art(SVG 일러스트 세트), paper(종이 배경·질감 공용 스타일)
+        │   ├── auth/            # AuthShowcase(로그인·회원가입 일러스트 패널)
         │   └── transaction/     # TransactionList, TransactionRow, QuickAddBar, TransactionForm,
         │                        # TransactionEditDialog(목록 팝업 수정), LocationPickerDialog,
         │                        # TransactionLocationDialog(위치 표시, TXN-14)
@@ -865,8 +867,8 @@ http
 - 배경(Ivory) `#FAF9F5` / 다크 `#1A1918`
 - 카드 `#FFFFFF` / 다크 `#1F1E1D`
 - 텍스트(Slate) `#141413` / 다크 `#FAF9F5`, 보조 `#73726C` / 다크 `#9C9A92`
-- 액센트: **단일 컬러 1개만** (Clay `#D97757`)
-- **수입 `#1B7A4B`(포레스트 그린) · 지출 `#4B4A45`(웜 그레이) · 잔액 `#B8542F`(딥 클레이)** — 액센트 규칙의 예외다. 금액의 방향을 색으로 구분하는 것이 이 앱의 핵심 정보이기 때문이다. 다크 모드는 수입 `#4FB57F` · 지출 `#B5B3AA` · 잔액 `#E8926F`. **예산 초과·음수 잔액의 경고 빨강은 지출색이 아니라 `--destructive`(`#B3452F`)를 쓴다.**
+- 액센트: **단일 컬러 1개만** — 라이트 `#B8542F`(흰 글자·링크가 WCAG AA 4.5:1 충족), 다크 `#D97757`(글자는 `#141413`). Clay 원색 `#D97757` 위에 흰 글자는 대비 3.1:1이라 라이트 모드에서 쓰지 않는다
+- **수입 `#166C40`(포레스트 그린, 히트맵 초록 배경 위 AA) · 지출 `#4B4A45`(웜 그레이) · 잔액 `#B8542F`(딥 클레이)** — 액센트 규칙의 예외다. 금액의 방향을 색으로 구분하는 것이 이 앱의 핵심 정보이기 때문이다. 다크 모드는 수입 `#4FB57F` · 지출 `#B5B3AA` · 잔액 `#E8926F`. **예산 초과·음수 잔액의 경고 빨강은 지출색이 아니라 `--destructive`(`#B3452F`)를 쓴다.**
 - 카테고리 팔레트 (색 미지정 시 순서대로 배정, 사용자 데이터 성격이라 브랜드 팔레트와 무관하게 유지):
   `#EF4444 #F59E0B #10B981 #4F46E5 #EC4899 #14B8A6 #8B5CF6 #F97316 #737373`
 
@@ -914,6 +916,13 @@ import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 - 삭제: `opacity→0` + `height→0`, `AnimatePresence`
 - 차트 막대: 너비 0 → 목표값, 300ms (**차트에만 예외적으로 200ms를 넘긴다**)
 - **그 외 200ms 이내, 과한 모션 금지.** `useReducedMotion`으로 `prefers-reduced-motion` 존중
+- **화면 진입 시 한 번 도는 연출만 예외로 200ms를 넘길 수 있다.** 스크롤·호버마다 흩어지는 효과는 두지 않는다(한 번 잘 짠 등장이 낫다).
+  - 순차 등장: `.reveal-stack`(`globals.css`)을 컨테이너에 붙이면 직계 자식이 위에서부터 400ms · 60ms 간격으로 나타난다(CSS만 사용, reduced-motion이면 꺼짐). 대시보드와 로그인/회원가입이 쓴다.
+  - 숫자 카운트업: 대시보드 요약 숫자(`AnimatedAmount`, 700ms). 끝나면 정확한 값으로 고정한다.
+  - 헤더 메뉴 알약: `layoutId`로 활성 메뉴 사이를 미끄러져 이동한다(스프링, 사용자 동작에 대한 응답).
+  - 로그인/회원가입 일러스트(`AuthShowcase`): 그래프 그려짐 → 동전 → 도장 순서로 약 2초 1회. 이후 칩 두 개만 5px 진폭으로 천천히 떠다닌다.
+- **일러스트**: 이미지 파일 없이 SVG를 직접 그린다(`components/illustration/Art.tsx`, `next/image` 미사용). 종이를 오려 붙인 듯한 납작한 도형 + 굵고 둥근 선으로 통일하고, 색은 전부 테마 토큰(`var(--primary)` 등)이라 라이트/다크를 따로 그리지 않는다. 장식이므로 `aria-hidden`이고 의미는 옆 제목·문구가 전달한다. 빈 상태·에러 상태(`EmptyState`의 `art`, `ErrorState`)와 화면 제목(`PageHeader`), 대시보드 히어로, 로그인/회원가입 패널에 쓴다. 동전 하나만 4px 진폭으로 떠오른다(`.art-bob`).
+- **배경 분위기**: `body`에 Clay·수입 그린이 화면 위쪽 모서리에서 은은하게 번지는 그라데이션을 둔다(스크롤하면 사라짐). 헤더는 `bg-background/80` + `backdrop-blur`. 그림자를 쓰지 않는다는 원칙은 그대로다.
 
 ---
 
