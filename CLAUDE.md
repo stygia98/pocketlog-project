@@ -877,7 +877,7 @@ http
 - 라운드: 카드 `rounded-xl`, 버튼/인풋 `rounded-lg`
 - 폰트: 본문은 **Pretendard**. ⚠️ **Google Fonts에 없으므로 `next/font/google`로 불러올 수 없다.** 폰트 파일(`.woff2`)을 `src/app/fonts/`에 넣고 **`next/font/local`**로 로드한다. 가변 폰트(`PretendardVariable.woff2`) 하나면 충분하다.
   - **헤딩도 본문과 같은 Pretendard로 통일한다**(세리프 사용 안 함). `--font-heading`은 `var(--font-sans)`를 가리키며, 제목에 쓰는 `font-heading` 클래스는 그대로 둔다.
-- 본문 15px / 항목 제목 16px semibold / 캡션 13px
+- 글자 크기는 Tailwind 기본값보다 **3px씩 키운 값**이다(`globals.css`의 `--text-*`): 본문 17px(`text-sm`) / 항목 제목 19px(`text-base`) semibold / 캡션 15px(`text-xs`). 여백·높이(rem)는 그대로다
 - **금액은 `tabular-nums`를 적용한다.** 비례 숫자로 두면 목록에서 자릿수가 세로로 어긋나 읽기 어렵다. Tailwind의 `tabular-nums` 유틸리티 한 줄이다
 - 컨테이너 `max-w-5xl`(대시보드는 차트가 있어 표본보다 넓다), 패딩 모바일 16px · 데스크톱 24px
 - **다크 모드**: 토큰을 라이트/다크 양쪽으로 정의하고, 헤더의 아이콘 버튼으로 **사용자가 직접 전환하는 토글**을 둔다(`UX-09`). 선택값은 `localStorage`에 저장되어 재방문 시 유지되고, 선택하지 않았다면 `prefers-color-scheme`(OS 설정)을 따른다.
