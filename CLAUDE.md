@@ -471,6 +471,7 @@ Base path: `/api/v1`
 | POST | `/api/v1/auth/signup` | 회원가입 (email, password, nickname) | X |
 | POST | `/api/v1/auth/login` | 로그인 → JWT 반환 | X |
 | GET | `/api/v1/auth/me` | 내 정보 조회 | O |
+| PUT | `/api/v1/auth/me` | 내 닉네임 변경 (`{ nickname }`, 1~50자) → 갱신된 내 정보(`UserResponse`) 반환 | O |
 
 > **로그아웃은 서버 API를 만들지 않는다.** Refresh Token과 토큰 블랙리스트가 없으므로, 프론트에서 localStorage의 토큰을 제거하고 React Query 캐시를 비운 뒤 `/login`으로 이동하는 것으로 처리한다.
 >
