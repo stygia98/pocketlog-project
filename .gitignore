@@ -20,3 +20,11 @@ node_modules/
 mcp-shrimp-task-manager/
 package.json
 package-lock.json
+
+# 설치된 에이전트 스킬과 MCP 브라우저 자동화 산출물. 문서가 아니다
+.agents/
+.playwright-mcp/
+skills-lock.json
+
+# 로컬 DB 덤프. 데이터는 seed-*.sql이 정본이므로 여기 두지 않는다
+moneylog_db
